@@ -3,26 +3,84 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const user = require('../models/user')
+const song = require('../models/song')
+const SongsController = require('../controllers/SongsController')
+// const Joi = require('Joi')
+const jwt = require('jsonwebtoken')
 // const morgan = require('morgan')
 
 const app = express()
 // app.use(morgan('combined'))
 mongoose.Promise = global.Promise
-mongoose.connect('mongodb://localhost:27017/userdb', {useMongoClient: true})
+mongoose.connect('mongodb://localhost:27017/userdb', { useNewUrlParser: true })
 app.use(bodyParser.json())
 app.use(cors())
 
-app.post('/register', (req, res) => {
-    // res.send({
-    //     message: `Welcome! ${req.body.email}`
-    // })
-    user.create(req.body, (err, user) => {
+function jwtSignUser(user) {
+    const ONE_WEEK = 60 * 60 * 24 * 7
+    return jwt.sign(user, process.env.JWT_SECRET || 'secret', {
+        expiresIn: ONE_WEEK
+    })
+}
+
+app.post('/register', async (req, res) => {
+    user.create({ email: req.body.email, password: req.body.password }, (err, user) => {
         if (err) {
-          res.send(err);
+            res.status(400).send({ error: 'This email account is already in use.' })
         } else {
-          res.send(user);
+            const userJson = user.toJSON()
+            res.send({ user: userJson, token: jwtSignUser(userJson) })
         }
-      })
+    })
 })
 
+app.post('/login', async (req, res) => {
+    user.findOne({ email: req.body.email }, async (err, user) => {
+        if (err) {
+            res.status(500).send({ error: 'An error has occured when login.' })
+        } else {
+            if (!user) {
+                res.status(403).send({ error: 'User not found.' })
+            } else {
+                const isPasswordValid = await user.comparePassword(req.body.password)
+                if (!isPasswordValid) {
+                    res.status(403).send({ error: 'Your email address or password is incorrect.' })
+                } else {
+                    const userJson = user.toJSON()
+                    res.send({ user: userJson, token: jwtSignUser(userJson) })
+                }
+            }
+        }
+    })
+})
+
+app.post('/songs', async (req, res) => {
+    song.create(req.body, (err, song) => {
+        if (err) {
+            res.status(500).send({ error: 'An error has occured when trying to create the song' })
+        } else {
+            res.send(song)
+        }
+    })
+})
+app.get('/songs', async (req, res) => {
+    song
+    .find()
+    .limit(10)
+    .exec(function (err, songs) {
+        if (err) {
+            res.status(500).send({error: "An error has occured when trying to fetch the songs."})
+        } else {
+            res.send(songs)
+        }
+    })
+})
+// app.post(app => {
+//     app.post('/songs',
+//     SongsController.post)
+// })
+// app.get(app => {
+//     app.get('/songs',
+//     SongsController.index)
+// })
 app.listen(process.env.PORT || 8081)
