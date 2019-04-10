@@ -15,15 +15,21 @@
         >
           <v-icon>add</v-icon>
         </v-btn>
-        <div class="song"  v-for="song in songs" :key="song.id">
+        <div class="song" v-for="song in songs" :key="song.id">
           <v-layout>
             <v-flex xs6>
               <div class="song-title">{{song.title}}</div>
               <div class="song-artist">{{song.artist}}</div>
               <div class="song-genre">{{song.genre}}</div>
+              <v-btn
+                dark
+                round
+                class="cyan"
+                @click="navigateTo({name: 'song', params: { songId: song._id} })"
+              >View</v-btn>
             </v-flex>
             <v-flex xs6>
-              <img class="album-image" :src="song.albumImageUrl">
+              <img class="album-image" :src="!song.albumImageUrl ? '../assets/logo.png' : song.albumImageUrl" :onerror="logo"/>
             </v-flex>
           </v-layout>
         </div>
@@ -38,7 +44,8 @@ import SongsService from "@/services/SongsService";
 export default {
   data() {
     return {
-      songs: null
+      songs: null,
+      logo: 'this.src="' + require('../assets/logo.png') + '"'
     };
   },
   methods: {

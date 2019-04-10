@@ -75,12 +75,16 @@ app.get('/songs', async (req, res) => {
         }
     })
 })
-// app.post(app => {
-//     app.post('/songs',
-//     SongsController.post)
-// })
-// app.get(app => {
-//     app.get('/songs',
-//     SongsController.index)
-// })
+app.get('/songs/:songId', async (req, res) => {
+    song
+    .findById(req.params.songId)
+    .exec(function (err, song) {
+        if (err) {
+            res.status(500).send({error: "An error has occured when trying to fetch the song."})
+        } else {
+            res.send(song)
+        }
+    })
+})
+
 app.listen(process.env.PORT || 8081)
