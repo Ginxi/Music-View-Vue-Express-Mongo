@@ -8,6 +8,12 @@
               <div class="song-title">{{song.title}}</div>
               <div class="song-artist">{{song.artist}}</div>
               <div class="song-genre">{{song.genre}}</div>
+              <v-btn
+                dark
+                round
+                class="cyan"
+                @click="navigateTo({name: 'song-edit', params: { songId: song._id} })"
+              >Edit</v-btn>
             </v-flex>
             <v-flex xs6>
               <img
@@ -55,6 +61,11 @@ export default {
       song: {},
       logo: 'this.src="' + require("../assets/logo.png") + '"'
     };
+  },
+  methods: {
+      navigateTo(route) {
+          this.$router.push(route)
+      }
   },
   components: {
     Panel

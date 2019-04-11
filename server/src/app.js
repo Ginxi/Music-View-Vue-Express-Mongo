@@ -65,22 +65,32 @@ app.post('/songs', async (req, res) => {
 })
 app.get('/songs', async (req, res) => {
     song
-    .find()
-    .limit(10)
-    .exec(function (err, songs) {
-        if (err) {
-            res.status(500).send({error: "An error has occured when trying to fetch the songs."})
-        } else {
-            res.send(songs)
-        }
-    })
+        .find()
+        .limit(10)
+        .exec(function (err, songs) {
+            if (err) {
+                res.status(500).send({ error: "An error has occured when trying to fetch the songs." })
+            } else {
+                res.send(songs)
+            }
+        })
 })
 app.get('/songs/:songId', async (req, res) => {
     song
-    .findById(req.params.songId)
-    .exec(function (err, song) {
+        .findById(req.params.songId)
+        .exec(function (err, song) {
+            if (err) {
+                res.status(500).send({ error: "An error has occured when trying to fetch the song." })
+            } else {
+                res.send(song)
+            }
+        })
+})
+app.put('/songs/:songId', async (req, res) => {
+    console.log(req.body)
+    song.findOneAndUpdate({ _id: req.params.songId }, req.body, (err, song) => {
         if (err) {
-            res.status(500).send({error: "An error has occured when trying to fetch the song."})
+            res.status(500).send({ error: "An error has occured when trying to update the song." })
         } else {
             res.send(song)
         }
