@@ -4,7 +4,6 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const user = require('../models/user')
 const song = require('../models/song')
-const SongsController = require('../controllers/SongsController')
 // const Joi = require('Joi')
 const jwt = require('jsonwebtoken')
 // const morgan = require('morgan')
@@ -64,8 +63,19 @@ app.post('/songs', async (req, res) => {
     })
 })
 app.get('/songs', async (req, res) => {
+    let songs = null
+    const search = req.query.search
+    if (search) {
+        songs = {
+            $or: [
+                {title: { '$regex' : search, '$options' : 'i' }},
+                {artist: { '$regex' : search, '$options' : 'i' }},
+                {genre: { '$regex' : search, '$options' : 'i' }}
+            ]
+        }
+    }
     song
-        .find()
+        .find(songs)
         .limit(10)
         .exec(function (err, songs) {
             if (err) {

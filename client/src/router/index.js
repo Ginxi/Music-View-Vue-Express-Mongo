@@ -13,11 +13,6 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/',
-      name: 'root',
-      component: HelloWorld
-    },
-    {
       path: '/register',
       name: 'register',
       component: Register
@@ -46,6 +41,10 @@ export default new Router({
       path: '/songs/:songId/edit',
       name: 'song-edit',
       component: EditSong
+    },
+    {
+      path: '*',
+      redirect: 'songs'
     }
   ]
 })

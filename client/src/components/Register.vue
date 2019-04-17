@@ -15,7 +15,7 @@
           ></v-text-field>
         </v-form>
         <br>
-        <div class="error1" v-html="error"/>
+        <div class="danger-alert" v-html="error"/>
         <br>
         <v-btn color="cyan" :dark="valid" round :disabled="!valid" @click="register">Register</v-btn>
       </panel>
@@ -62,12 +62,13 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await AuthenticationService.login({
+        const response = await AuthenticationService.register({
           email: this.email,
           password: this.password
         });
         this.$store.dispatch("setToken", response.data.token);
         this.$store.dispatch("setUser", response.data.user);
+        this.$router.push({name: 'songs'})
       } catch (err) {
         this.error = err.response.data.error;
         console.log(this.error);
@@ -82,7 +83,4 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.error1 {
-  color: red;
-}
 </style>

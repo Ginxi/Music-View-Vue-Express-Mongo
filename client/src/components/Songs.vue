@@ -1,6 +1,9 @@
 <template>
   <v-layout row>
     <v-flex xs6 offset-xs3>
+      <panel title="Search" class="mb-2">
+        <v-text-field label="Search by song title, artist, album, or genre" v-model="search"></v-text-field>
+      </panel>
       <panel title="Songs">
         <v-btn
           slot="action"
@@ -16,22 +19,28 @@
           <v-icon>add</v-icon>
         </v-btn>
         <div class="song" v-for="song in songs" :key="song.id">
-          <v-layout>
-            <v-flex xs6>
-              <div class="song-title">{{song.title}}</div>
-              <div class="song-artist">{{song.artist}}</div>
-              <div class="song-genre">{{song.genre}}</div>
-              <v-btn
-                dark
-                round
-                class="cyan"
-                @click="navigateTo({name: 'song', params: { songId: song._id} })"
-              >View</v-btn>
-            </v-flex>
-            <v-flex xs6>
-              <img class="album-image" :src="!song.albumImageUrl ? '../assets/logo.png' : song.albumImageUrl" :onerror="logo"/>
-            </v-flex>
-          </v-layout>
+          <v-card>
+            <v-layout>
+              <v-flex xs6>
+                <div class="song-title">{{song.title}}</div>
+                <div class="song-artist">{{song.artist}}</div>
+                <div class="song-genre">{{song.genre}}</div>
+                <v-btn
+                  dark
+                  round
+                  class="cyan"
+                  @click="navigateTo({name: 'song', params: { songId: song._id} })"
+                >View</v-btn>
+              </v-flex>
+              <v-flex xs6>
+                <img
+                  class="album-image"
+                  :src="!song.albumImageUrl ? '../assets/logo.png' : song.albumImageUrl"
+                  :onerror="logo"
+                >
+              </v-flex>
+            </v-layout>
+          </v-card>
         </div>
       </panel>
     </v-flex>
@@ -41,12 +50,34 @@
 <script>
 import Panel from "@/components/Panel";
 import SongsService from "@/services/SongsService";
+import _ from 'lodash'
 export default {
   data() {
     return {
       songs: null,
-      logo: 'this.src="' + require('../assets/logo.png') + '"'
+      logo: 'this.src="' + require("../assets/logo.png") + '"',
+      search: ""
     };
+  },
+  watch: {
+    search: _.debounce(async function (value) {
+      const route = {
+        name: "songs"
+      };
+      if (this.search != "") {
+        route.query = {
+          search: this.search
+        };
+      }
+      this.$router.push(route);
+    }, 700),
+    "$route.query.search": {
+      immediate: true,
+      async handler(value) {
+        this.search = value;
+        this.songs = (await SongsService.index(value)).data;
+      }
+    }
   },
   methods: {
     navigateTo(route) {
@@ -56,9 +87,9 @@ export default {
   components: {
     Panel
   },
-  async mounted() {
-    this.songs = (await SongsService.index()).data;
-  }
+  // async mounted() {
+  //   this.songs = (await SongsService.index()).data;
+  // }
 };
 </script>
 
