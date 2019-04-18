@@ -5,17 +5,15 @@ const cors = require('cors')
 const user = require('../models/user')
 const song = require('../models/song')
 const bookmark = require('../models/bookmark')
-// const Joi = require('Joi')
+const history = require('../models/history')
 const jwt = require('jsonwebtoken')
-// const morgan = require('morgan')
-
 const app = express()
-// app.use(morgan('combined'))
+const isAuthenticated = require('../policies/isAuthenticated')
 mongoose.Promise = global.Promise
 mongoose.connect('mongodb://localhost:27017/userdb', { useNewUrlParser: true })
 app.use(bodyParser.json())
 app.use(cors())
-
+require('./passport')
 function jwtSignUser(user) {
     const ONE_WEEK = 60 * 60 * 24 * 7
     return jwt.sign(user, process.env.JWT_SECRET || 'secret', {
@@ -107,10 +105,11 @@ app.put('/songs/:songId', async (req, res) => {
     })
 })
 
-app.get('/bookmarks', async (req, res) => {
+app.get('/bookmarks',  isAuthenticated, async (req, res) => {
+    const userId = req.user._id
     if (!req.query.songId) {
         bookmark
-        .find(req.query)
+        .find({userId: userId})
         .populate('songId', {}, 'song')
         .exec(function (err, bookmarks) {
             if (err) {
@@ -121,7 +120,7 @@ app.get('/bookmarks', async (req, res) => {
         })
     } else {
         bookmark
-        .findOne(req.query)
+        .findOne({userId: userId, songId: req.query.songId})
         .exec(function (err, bookmark) {
             if (err) {
                 res.status(500).send({ error: "An error has occured when trying to fetch the bookmark." })
@@ -130,20 +129,12 @@ app.get('/bookmarks', async (req, res) => {
             }
         })
     }
-    bookmark
-        .find(req.query)
-        .populate('songId', {}, 'song')
-        .exec(function (err, bookmarks) {
-            if (err) {
-                res.status(500).send({ error: "An error has occured when trying to fetch the bookmark." })
-            } else {
-            
-            }
-        })
 })
 
-app.post('/bookmarks', async (req, res) => {
-    bookmark.create(req.body.params, (err, bookmark) => {
+app.post('/bookmarks', isAuthenticated, async (req, res) => {
+    const userId = req.user._id
+    const songId = req.body.params.songId
+    bookmark.create({userId: userId, songId: songId}, (err, bookmark) => {
         if (err) {
             res.status(500).send({ error: "An error has occured when creating the bookmark." })
         } else {
@@ -152,12 +143,46 @@ app.post('/bookmarks', async (req, res) => {
     })
 })
 
-app.delete('/bookmarks/:bookmarkId', async (req, res) => {
-    bookmark.findByIdAndRemove(req.params.bookmarkId, (err, todo) => {
+app.delete('/bookmarks/:bookmarkId', isAuthenticated, async (req, res) => {
+    const userId = req.user._id
+    bookmark.findOneAndRemove({_id: req.params.bookmarkId, userId: userId}, (err, todo) => {
         if (err) {
             res.status(500).send({ error: "An error has occured when deleting the bookmark." })
         } else {
             res.send({ message: "Successfully deleted", id: todo._id })
+        }
+    })
+})
+
+app.post('/history', isAuthenticated, async (req, res) => {
+    const userId = req.user._id
+    const songId = req.body.songId
+    history.create({userId: userId, songId: songId}, (err, curHistory) => {
+        if (err) {
+            history.findOneAndUpdate(req.body, {updateTime: new Date()}, (err, history) => {
+                if (err) {
+                    res.status(500).send({ error: "An error has occured when creating the history." })
+                } else {
+                    res.send(history)
+                }
+            })
+        } else {
+            res.send(curHistory)
+        }
+    })
+})
+app.get('/history', isAuthenticated, async (req, res) => {
+    const userId = req.user._id
+    history
+    .find({userId: userId})
+    .populate('songId', {}, 'song')
+    .sort({createTime: -1})
+    .limit(10)
+    .exec(function (err, bookmarks) {
+        if (err) {
+            res.status(500).send({ error: "An error has occured when trying to fetch the history." })
+        } else {
+            res.send(bookmarks)
         }
     })
 })

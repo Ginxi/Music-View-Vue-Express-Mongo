@@ -1,8 +1,23 @@
 <template>
   <v-layout row>
     <v-flex xs6 offset-xs3>
-    <v-flex>
-      <panel title="Bookmarks" class="mb-2">
+      <panel title="Recently Viewed Songs" class="mb-2" v-if="isUserLoggedIn">
+        <v-data-table
+        :headers="headers"
+        :pagination.sync="pagination"
+        :items="recentSongs"
+        >
+        <template slot="items" scope="props">
+          <td class="text-xs-right">
+            {{props.item.songId.title}}
+          </td>
+          <td class="text-xs-right">
+            {{props.item.songId.artist}}
+          </td>
+        </template>
+        </v-data-table>
+      </panel>
+      <panel title="Bookmarks" class="mb-2" v-if="isUserLoggedIn">
         <v-data-table
         :headers="headers"
         :pagination.sync="pagination"
@@ -18,7 +33,6 @@
         </template>
         </v-data-table>
       </panel>
-    </v-flex>
       <panel title="Search" class="mb-2">
         <v-text-field label="Search by song title, artist, album, or genre" v-model="search"></v-text-field>
       </panel>
@@ -71,6 +85,7 @@ import SongsService from "@/services/SongsService";
 import _ from 'lodash'
 import {mapState} from 'vuex'
 import BookmarksService from '@/services/BookmarksService'
+import SongHistoryService from '@/services/SongHistoryService'
 export default {
   data() {
     return {
@@ -88,10 +103,11 @@ export default {
         }
       ],
       pagination: {
-        sortBy: 'date',
+        sortBy: 'updateTime',
         descending: true
       },
-      bookmarks: []
+      bookmarks: [],
+      recentSongs: []
     };
   },
   computed: {
@@ -128,8 +144,8 @@ export default {
   async mounted() {
    if (this.isUserLoggedIn) {
      this.bookmarks = (await BookmarksService.index({
-       userId: this.user._id
      })).data
+     this.recentSongs = (await SongHistoryService.index()).data
    }
   }
 };

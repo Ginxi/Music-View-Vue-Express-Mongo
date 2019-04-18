@@ -71,6 +71,7 @@ import Panel from "@/components/Panel";
 import SongsService from "@/services/SongsService";
 import {mapState} from "vuex";
 import BookmarksService from "@/services/BookmarksService";
+import SongHistoryService from "@/services/SongHistoryService";
 export default {
   data() {
     return {
@@ -89,17 +90,14 @@ export default {
     async setBookmark() {
       try {
        this.bookmark =  (await BookmarksService.post({
-          songId: this.songId,
-          userId: this.user._id
+          songId: this.songId
         })).data;
-        console.log(this.bookmark)
       } catch (err) {
         console.log(err);
       }
     },
     async unbookmark() {
       try {
-        console.log(this.bookmark)
         await BookmarksService.delete(this.bookmark._id);
         this.bookmark = null
       } catch (err) {
@@ -116,9 +114,11 @@ export default {
       this.song = (await SongsService.show(this.songId)).data;
       if (this.isUserLoggedIn) {
         this.bookmark = (await BookmarksService.index({
-          songId: this.songId,
-          userId: this.user._id
+          songId: this.songId
         })).data;
+        SongHistoryService.post({
+          songId: this.songId
+        })
       }
     } catch (err) {
       console.log(err);
