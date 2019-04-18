@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const user = require('../models/user')
 const song = require('../models/song')
+const bookmark = require('../models/bookmark')
 // const Joi = require('Joi')
 const jwt = require('jsonwebtoken')
 // const morgan = require('morgan')
@@ -25,7 +26,7 @@ function jwtSignUser(user) {
 app.post('/register', async (req, res) => {
     user.create({ email: req.body.email, password: req.body.password }, (err, user) => {
         if (err) {
-            res.status(400).send({ error: 'This email account is already in use.' })
+            res.status(500).send({ error: 'This email account is already in use.' })
         } else {
             const userJson = user.toJSON()
             res.send({ user: userJson, token: jwtSignUser(userJson) })
@@ -97,12 +98,43 @@ app.get('/songs/:songId', async (req, res) => {
         })
 })
 app.put('/songs/:songId', async (req, res) => {
-    console.log(req.body)
     song.findOneAndUpdate({ _id: req.params.songId }, req.body, (err, song) => {
         if (err) {
             res.status(500).send({ error: "An error has occured when trying to update the song." })
         } else {
             res.send(song)
+        }
+    })
+})
+
+app.get('/bookmarks', async (req, res) => {
+    bookmark
+        .findOne(req.body)
+        .exec(function (err, bookmark) {
+            if (err) {
+                res.status(500).send({ error: "An error has occured when trying to fetch the song." })
+            } else {
+                res.send(bookmark)
+            }
+        })
+})
+
+app.post('/bookmarks', async (req, res) => {
+    bookmark.create(req.body.params, (err, bookmark) => {
+        if (err) {
+            res.status(500).send({error: "An error has occured when creating the bookmark."})
+        } else {
+            res.send(bookmark)
+        }
+    })
+})
+
+app.delete('/bookmarks/:bookmarkId', async (req, res) => {
+    bookmark.findByIdAndRemove(req.params.bookmarkId, (err, todo) => {
+        if (err) {
+            res.status(500).send({error: "An error has occured when deleting the bookmark."})
+        } else {
+            res.send({message: "Successfully deleted", id: todo._id})
         }
     })
 })

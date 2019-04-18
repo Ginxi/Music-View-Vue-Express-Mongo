@@ -14,6 +14,20 @@
                 class="cyan"
                 @click="navigateTo({name: 'song-edit', params: { songId: song._id} })"
               >Edit</v-btn>
+              <v-btn
+                dark
+                round
+                v-if="isUserLoggedIn && !bookmark"
+                class="cyan"
+                @click="setBookmark"
+              >Bookmark</v-btn>
+              <v-btn
+                dark
+                round
+                v-if="isUserLoggedIn && bookmark"
+                class="cyan"
+                @click="unbookmark"
+              >Unbookmark</v-btn>
             </v-flex>
             <v-flex xs6>
               <img
@@ -55,24 +69,60 @@
 <script>
 import Panel from "@/components/Panel";
 import SongsService from "@/services/SongsService";
+import {mapState} from "vuex";
+import BookmarksService from "@/services/BookmarksService";
 export default {
   data() {
     return {
       song: {},
-      logo: 'this.src="' + require("../assets/logo.png") + '"'
+      bookmark: null,
+      logo: 'this.src="' + require("../assets/logo.png") + '"',
     };
   },
+  computed: {
+    ...mapState(['isUserLoggedIn'])
+  },
   methods: {
-      navigateTo(route) {
-          this.$router.push(route)
+    navigateTo(route) {
+      this.$router.push(route);
+    },
+    async setBookmark() {
+      try {
+       this.bookmark =  (await BookmarksService.post({
+          songId: this.songId,
+          userId: this.$store.state.user._id
+        })).data;
+        console.log(this.bookmark)
+      } catch (err) {
+        console.log(err);
       }
+    },
+    async unbookmark() {
+      try {
+        console.log(this.bookmark)
+        await BookmarksService.delete(this.bookmark._id);
+        this.bookmark = null
+      } catch (err) {
+        console.log(err);
+      }
+    }
   },
   components: {
     Panel
   },
   async mounted() {
-    const songId = this.$store.state.route.params.songId;
-    this.song = (await SongsService.show(songId)).data;
+    try {
+      this.songId = this.$store.state.route.params.songId;
+      this.song = (await SongsService.show(this.songId)).data;
+      if (this.isUserLoggedIn) {
+        this.bookmark = (await BookmarksService.index({
+          songId: this.songId,
+          userId: this.$store.state.user.id
+        })).data;
+      }
+    } catch (err) {
+      console.log(err);
+    }
   }
 };
 </script>
