@@ -69,9 +69,9 @@ app.get('/songs', async (req, res) => {
     if (search) {
         songs = {
             $or: [
-                {title: { '$regex' : search, '$options' : 'i' }},
-                {artist: { '$regex' : search, '$options' : 'i' }},
-                {genre: { '$regex' : search, '$options' : 'i' }}
+                { title: { '$regex': search, '$options': 'i' } },
+                { artist: { '$regex': search, '$options': 'i' } },
+                { genre: { '$regex': search, '$options': 'i' } }
             ]
         }
     }
@@ -108,13 +108,36 @@ app.put('/songs/:songId', async (req, res) => {
 })
 
 app.get('/bookmarks', async (req, res) => {
-    bookmark
-        .findOne(req.body)
+    if (!req.query.songId) {
+        bookmark
+        .find(req.query)
+        .populate('songId', {}, 'song')
+        .exec(function (err, bookmarks) {
+            if (err) {
+                res.status(500).send({ error: "An error has occured when trying to fetch the bookmark." })
+            } else {
+                res.send(bookmarks)
+            }
+        })
+    } else {
+        bookmark
+        .findOne(req.query)
         .exec(function (err, bookmark) {
             if (err) {
-                res.status(500).send({ error: "An error has occured when trying to fetch the song." })
+                res.status(500).send({ error: "An error has occured when trying to fetch the bookmark." })
             } else {
                 res.send(bookmark)
+            }
+        })
+    }
+    bookmark
+        .find(req.query)
+        .populate('songId', {}, 'song')
+        .exec(function (err, bookmarks) {
+            if (err) {
+                res.status(500).send({ error: "An error has occured when trying to fetch the bookmark." })
+            } else {
+            
             }
         })
 })
@@ -122,7 +145,7 @@ app.get('/bookmarks', async (req, res) => {
 app.post('/bookmarks', async (req, res) => {
     bookmark.create(req.body.params, (err, bookmark) => {
         if (err) {
-            res.status(500).send({error: "An error has occured when creating the bookmark."})
+            res.status(500).send({ error: "An error has occured when creating the bookmark." })
         } else {
             res.send(bookmark)
         }
@@ -132,9 +155,9 @@ app.post('/bookmarks', async (req, res) => {
 app.delete('/bookmarks/:bookmarkId', async (req, res) => {
     bookmark.findByIdAndRemove(req.params.bookmarkId, (err, todo) => {
         if (err) {
-            res.status(500).send({error: "An error has occured when deleting the bookmark."})
+            res.status(500).send({ error: "An error has occured when deleting the bookmark." })
         } else {
-            res.send({message: "Successfully deleted", id: todo._id})
+            res.send({ message: "Successfully deleted", id: todo._id })
         }
     })
 })

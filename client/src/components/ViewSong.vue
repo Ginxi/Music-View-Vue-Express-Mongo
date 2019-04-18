@@ -80,7 +80,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['isUserLoggedIn'])
+    ...mapState(['isUserLoggedIn', 'user'])
   },
   methods: {
     navigateTo(route) {
@@ -90,7 +90,7 @@ export default {
       try {
        this.bookmark =  (await BookmarksService.post({
           songId: this.songId,
-          userId: this.$store.state.user._id
+          userId: this.user._id
         })).data;
         console.log(this.bookmark)
       } catch (err) {
@@ -117,7 +117,7 @@ export default {
       if (this.isUserLoggedIn) {
         this.bookmark = (await BookmarksService.index({
           songId: this.songId,
-          userId: this.$store.state.user.id
+          userId: this.user._id
         })).data;
       }
     } catch (err) {

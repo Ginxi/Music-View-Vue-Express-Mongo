@@ -1,6 +1,24 @@
 <template>
   <v-layout row>
     <v-flex xs6 offset-xs3>
+    <v-flex>
+      <panel title="Bookmarks" class="mb-2">
+        <v-data-table
+        :headers="headers"
+        :pagination.sync="pagination"
+        :items="bookmarks"
+        >
+        <template slot="items" scope="props">
+          <td class="text-xs-right">
+            {{props.item.songId.title}}
+          </td>
+          <td class="text-xs-right">
+            {{props.item.songId.artist}}
+          </td>
+        </template>
+        </v-data-table>
+      </panel>
+    </v-flex>
       <panel title="Search" class="mb-2">
         <v-text-field label="Search by song title, artist, album, or genre" v-model="search"></v-text-field>
       </panel>
@@ -51,13 +69,33 @@
 import Panel from "@/components/Panel";
 import SongsService from "@/services/SongsService";
 import _ from 'lodash'
+import {mapState} from 'vuex'
+import BookmarksService from '@/services/BookmarksService'
 export default {
   data() {
     return {
       songs: null,
       logo: 'this.src="' + require("../assets/logo.png") + '"',
-      search: ""
+      search: "",
+      headers: [
+        {
+          text: "Title",
+          value: "title"
+        },
+        {
+          text: "Artist",
+          value: "artist"
+        }
+      ],
+      pagination: {
+        sortBy: 'date',
+        descending: true
+      },
+      bookmarks: []
     };
+  },
+  computed: {
+    ...mapState(['isUserLoggedIn', 'user'])
   },
   watch: {
     search: _.debounce(async function (value) {
@@ -87,9 +125,13 @@ export default {
   components: {
     Panel
   },
-  // async mounted() {
-  //   this.songs = (await SongsService.index()).data;
-  // }
+  async mounted() {
+   if (this.isUserLoggedIn) {
+     this.bookmarks = (await BookmarksService.index({
+       userId: this.user._id
+     })).data
+   }
+  }
 };
 </script>
 
